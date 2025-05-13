@@ -1,4 +1,4 @@
-var socket = io.connect("http://127.0.0.1:3000");
+var socket = io.connect("https://node-chat-7ja3.onrender.com");
 
 socket.on('connect', () => {
     console.log(socket.id);
