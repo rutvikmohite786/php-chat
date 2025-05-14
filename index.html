@@ -48,7 +48,7 @@
         #typingIndicator {
             display: none;
             position: absolute;
-            bottom: 45px;
+            bottom: 60px;
             left: 15px;
             font-size: 12px;
             color: gray;
@@ -99,6 +99,7 @@
     </div>
 
     <!-- Modal for name and avatar -->
+    <!-- Modal for name and avatar -->
     <div class="modal fade" id="userModal" tabindex="-1" aria-labelledby="userModalLabel" aria-hidden="true"
         data-bs-backdrop="static">
         <div class="modal-dialog modal-dialog-centered">
@@ -109,13 +110,35 @@
                 <div class="modal-body">
                     <input type="text" id="username" class="form-control mb-3 rounded-pill px-4 py-2"
                         placeholder="Your name" required />
+
                     <div class="d-flex justify-content-around mb-3">
-                        <img src="https://i.pravatar.cc/100?img=12" class="avatar-select rounded-circle border"
-                            data-avatar="male" style="cursor:pointer; width:150px;">
-                        <img src="https://i.pravatar.cc/100?img=47" class="avatar-select rounded-circle border"
-                            data-avatar="female" style="cursor:pointer; width:150px;">
+                        <img src="man.png" class="avatar-select rounded-circle border" data-avatar="male"
+                            style="cursor:pointer; width:150px;">
+                        <img src="human.png" class="avatar-select rounded-circle border" data-avatar="female"
+                            style="cursor:pointer; width:150px;">
                     </div>
+
                     <input type="hidden" id="avatarChoice" />
+
+                    <div class="terms-box mb-3 p-3 border rounded"
+                        style="height: 150px; overflow-y: auto; font-size: 14px;">
+                        <p><strong>Terms and Conditions:</strong></p>
+                        <p>1. You must be 18+ to use this service.</p>
+                        <p>2. Do not use offensive or inappropriate language.</p>
+                        <p>3. Respect other users and their privacy.</p>
+                        <p>4. No spamming or promotion of third-party services.</p>
+                        <p>5. Violators will be banned without warning.</p>
+                        <p>6. We do not store any chat history.</p>
+                        <p>7. Use at your own risk. The platform is provided as-is.</p>
+                    </div>
+
+                    <div class="form-check mb-3 text-start px-2">
+                        <input class="form-check-input" type="checkbox" value="" id="termsCheck">
+                        <label class="form-check-label" for="termsCheck">
+                            I agree to the Terms & Conditions
+                        </label>
+                    </div>
+
                     <div class="text-center">
                         <button class="btn btn-dark px-4 rounded-pill" id="joinBtn" disabled>Join</button>
                     </div>
@@ -123,6 +146,7 @@
             </div>
         </div>
     </div>
+
 
     <!-- Chat container -->
     <div class="container py-4">
@@ -146,13 +170,14 @@
                 <div id="typing-status" class="text-muted mt-1"></div>
 
                 <!-- Typing indicator -->
-                <div id="typingIndicator">Partner is typing...</div>
 
                 <!-- Chat Input -->
                 <!-- Emoji Picker -->
 
 
                 <div class="input-group border-top d-none" id="messageControls">
+                    <div id="typingIndicator"></div>
+
                     <div id="emojiPicker" class="emoji-picker">
                         <button class="btn btn-light btn-sm" data-emoji="😊">😊</button>
                         <button class="btn btn-light btn-sm" data-emoji="😂">😂</button>
@@ -230,18 +255,30 @@
             $('.avatar-select').removeClass('border border-primary');
             $(this).addClass('border border-primary');
             $('#avatarChoice').val($(this).data('avatar'));
-            $('#joinBtn').prop('disabled', !$('#username').val());
+            if ($('#termsCheck').is(':checked')) {
+                $('#joinBtn').prop('disabled', !$('#username').val());
+            }
         });
 
         $('#username').on('input', function () {
-            $('#joinBtn').prop('disabled', !$(this).val() || !$('#avatarChoice').val());
+            if ($('#termsCheck').is(':checked')) {
+                $('#joinBtn').prop('disabled', !$(this).val() || !$('#avatarChoice').val());
+            }
+        });
+
+        $('#termsCheck').on('change', function () {
+            if ($(this).is(':checked')) {
+                $('#joinBtn').prop('disabled', !$('#username').val() || !$('#avatarChoice').val());
+            } else {
+                $('#joinBtn').prop('disabled', true);
+            }
         });
 
         $('#joinBtn').click(function () {
             userName = $('#username').val().trim();
             userAvatar = $('#avatarChoice').val() === 'male'
-                ? 'https://i.pravatar.cc/100?img=12'
-                : 'https://i.pravatar.cc/100?img=47';
+                ? 'man.png'
+                : 'human.png';
 
             socket.emit('user_info', { name: userName, avatar: userAvatar });
             modal.hide();
@@ -264,6 +301,7 @@
         });
 
         $('#send').click(function () {
+            $('#emojiPicker').hide();
             const message = $('#input').val().trim();
             if (!message || !currentRoom) return;
 
@@ -284,6 +322,13 @@
             $('#chat').scrollTop($('#chat')[0].scrollHeight);
         });
 
+        $('#input').on('keypress', function (e) {
+            if (e.which === 13 && !e.shiftKey) {
+                e.preventDefault();
+                $('#send').click();
+            }
+        })
+
         socket.on('receive_encrypted', function (data) {
             const decrypted = CryptoJS.AES.decrypt(data.encrypted, SECRET_KEY).toString(CryptoJS.enc.Utf8);
             $('#chat').append(`
@@ -300,12 +345,13 @@
         });
 
         socket.on('partner_typing', function () {
+            $('#typingIndicator').text(partnerName + ' is typing...')
             $('#typingIndicator').show();
-            setTimeout(() => $('#typingIndicator').hide(), 2000);
+            setTimeout(() => $('#typingIndicator').hide(), 3000);
         });
 
         socket.on('partner_disconnected', () => {
-            $('#chat').append('<div class="text-muted text-center">Your partner has disconnected.</div>');
+            $('#chat').append('<div class="text-muted text-center">' + partnerName + '   has disconnected.</div>');
             $('#messageControls').hide();
         });
 
@@ -324,7 +370,6 @@
             if (senderId === mySocketId) {
                 $('.status').last().text('✓✓ Seen');
             }
-
         });
     </script>
 
