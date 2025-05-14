@@ -1,16 +1,16 @@
-var socket = io.connect("https://node-chat-7ja3.onrender.com");
+var socket = io.connect("http://127.0.0.1:3000");
 
 socket.on('connect', () => {
-    console.log(socket.id);
+    // console.log(socket.id);
     $('#socket_id').val(socket.id)
 });
 
 socket.once("message", (mess) => {
-    console.log(mess)
+    // console.log(mess)
 });
 
 socket.on('creatroom', (room) => {
-    console.log(room);
+    // console.log(room);
     $('#room_id').val(room)
 });
 
